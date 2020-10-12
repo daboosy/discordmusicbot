@@ -368,3 +368,163 @@ function play(guild, song) {
       let disp = queue.connection.dispatcher;
 
       if(isNaN(args[0])) return msg.channel.send(':notes: Numbers only!');
+      
+      if(parseInt(args[0]) > 100) return msg.channel.send('You can\'t set the volume more than **100**.')
+//:speaker: Volume changed from 20 to 20 ! The volume has been changed from ${queue.volume} to ${args[0]}
+      msg.channel.send(':loud_sound: Volume has been **changed** from (`' + queue.volume + '`) to (`' + args[0] + '`)');
+
+      queue.volume = args[0];
+
+      disp.setVolumeLogarithmic(queue.volume / 100);
+
+    } else if (cmd === 'queue') {
+
+      let queue = active.get(msg.guild.id);
+
+      if(!queue) return msg.channel.send(':no_entry_sign: There must be music playing to use that!');
+
+      let embed = new Discord.RichEmbed()
+      .setAuthor(`${client.user.username}`, client.user.displayAvatarURL)
+      let text = '';
+
+      for (var i = 0; i < queue.songs.length; i++) {
+        let num;
+        if((i) > 8) {
+          let st = `${i+1}`
+        } else {
+      }
+        text += `${num} ${queue.songs[i].title} [${queue.songs[i].duration}]\n`
+      }
+      embed.setDescription(`Songs Queue | ${msg.guild.name}\n\n ${text}`)
+      msg.channel.send(embed)
+
+    } else if(cmd === 'repeat') {
+
+      let vCh = msg.member.voiceChannel;
+
+      if(!vCh || vCh !== msg.guild.me.voiceChannel) return msg.channel.send('You are not in my voice channel');
+
+      let queue = active.get(msg.guild.id);
+
+      if(!queue || !queue.songs) return msg.channel.send('There is no music playing to repeat it.');
+
+      if(queue.repeating) {
+        queue.repeating = false;
+        return msg.channel.send(':arrows_counterclockwise: **Repeating Mode** (`False`)');
+      } else {
+        queue.repeating = true;
+        return msg.channel.send(':arrows_counterclockwise: **Repeating Mode** (`True`)');
+      }
+
+    } else if(cmd === 'forceskip') {
+
+      let vCh = msg.member.voiceChannel;
+
+      if(!vCh || vCh !== msg.guild.me.voiceChannel) return msg.channel.send('You are not in my voice channel');
+
+      let queue = active.get(msg.guild.id);
+
+      if(queue.repeating) {
+
+        queue.repeating = false;
+
+        msg.channel.send('ForceSkipped, Repeating mode is on.')
+
+        queue.connection.dispatcher.end('ForceSkipping..')
+
+        queue.repeating = true;
+
+      } else {
+
+        queue.connection.dispatcher.end('ForceSkipping..')
+
+        msg.channel.send('ForceSkipped.')
+
+      }
+
+     } else if(cmd === 'skipto') {
+
+      let vCh = msg.member.voiceChannel;
+
+      if(!vCh || vCh !== msg.guild.me.voiceChannel) return msg.channel.send('You are not in my voice channel');
+
+      let queue = active.get(msg.guild.id);
+
+      if(!queue.songs || queue.songs < 2) return msg.channel.send('There is no music to skip to.');
+
+    if(queue.repeating) return msg.channel.send('You can\'t skip, because repeating mode is on, run ' + `\`${prefix}repeat\` to turn off.`);
+
+      if(!args[0] || isNaN(args[0])) return msg.channel.send('Please input song number to skip to it, run ' + prefix + `queue` + ' to see songs numbers.');
+
+      let sN = parseInt(args[0]) - 1;
+
+      if(!queue.songs[sN]) return msg.channel.send('There is no song with this number.');
+
+      let i = 1;
+
+      msg.channel.send(`Skipped to: **${queue.songs[sN].title}[${queue.songs[sN].duration}]**`)
+
+      while (i < sN) {
+        i++;
+        queue.songs.shift();
+      }
+
+      queue.connection.dispatcher.end('SkippingTo..')
+
+    } else if(cmd === 'Nowplaying') {
+
+      let q = active.get(msg.guild.id);
+
+      let now = npMsg(q)
+
+      msg.channel.send(now.mes, now.embed)
+      .then(me => {
+        setInterval(() => {
+          let noww = npMsg(q)
+          me.edit(noww.mes, noww.embed)
+        }, 5000)
+      })
+
+      function npMsg(queue) {
+
+        let m = !queue || !queue.songs[0] ? 'No music playing.' : "Now Playing..."
+
+      const eb = new Discord.RichEmbed();
+
+      eb.setColor(msg.guild.me.displayHexColor)
+
+      if(!queue || !queue.songs[0]){
+
+        eb.setTitle("No music playing");
+            eb.setDescription("\u23F9 "+bar(-1)+" "+volumeIcon(!queue?100:queue.volume));
+      } else if(queue.songs) {
+
+        if(queue.requester) {
+
+          let u = msg.guild.members.get(queue.requester.id);
+
+          if(!u)
+            eb.setAuthor('Unkown (ID:' + queue.requester.id + ')')
+          else
+            eb.setAuthor(u.user.tag, u.user.displayAvatarURL)
+        }
+
+        if(queue.songs[0]) {
+        try {
+            eb.setTitle(queue.songs[0].title);
+            eb.setURL(queue.songs[0].url);
+        } catch (e) {
+          eb.setTitle(queue.songs[0].title);
+        }
+}
+        eb.setDescription(embedFormat(queue))
+
+      }
+
+      return {
+        mes: m,
+        embed: eb
+      }
+
+    }
+
