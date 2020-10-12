@@ -527,4 +527,141 @@ function play(guild, song) {
       }
 
     }
+    
 
+        if(!queue || !queue.songs) {
+          return "No music playing\n\u23F9 "+bar(-1)+" "+volumeIcon(100);
+        } else if(!queue.playing) {
+          return "No music playing\n\u23F9 "+bar(-1)+" "+volumeIcon(queue.volume);
+        } else {
+
+          let progress = (queue.connection.dispatcher.time / queue.songs[0].msDur);
+          let prog = bar(progress);
+          let volIcon = volumeIcon(queue.volume);
+          let playIcon = (queue.connection.dispatcher.paused ? "\u23F8" : "\u25B6")
+          let dura = queue.songs[0].duration;
+
+          return playIcon + ' ' + prog + ' `[' + formatTime(queue.connection.dispatcher.time) + '/' + dura + ']`' + volIcon;
+
+
+        }
+
+      }
+
+      function formatTime(duration) {
+  var milliseconds = parseInt((duration % 1000) / 100),
+    seconds = parseInt((duration / 1000) % 60),
+    minutes = parseInt((duration / (1000 * 60)) % 60),
+    hours = parseInt((duration / (1000 * 60 * 60)) % 24);
+
+  hours = (hours < 10) ? "0" + hours : hours;
+  minutes = (minutes < 10) ? "0" + minutes : minutes;
+  seconds = (seconds < 10) ? "0" + seconds : seconds;
+
+  return (hours > 0 ? hours + ":" : "") + minutes + ":" + seconds;
+}
+
+      function bar(precent) {
+
+        var str = '';
+
+        for (var i = 0; i < 12; i++) {
+
+          let pre = precent
+          let res = pre * 12;
+
+          res = parseInt(res)
+
+          if(i == res){
+            str+="\uD83D\uDD18";
+          }
+          else {
+            str+="▬";
+          }
+        }
+
+        return str;
+
+      }
+
+      function volumeIcon(volume) {
+
+        if(volume == 0)
+           return "\uD83D\uDD07";
+       if(volume < 30)
+           return "\uD83D\uDD08";
+       if(volume < 70)
+           return "\uD83D\uDD09";
+       return "\uD83D\uDD0A";
+
+      }
+
+    }
+
+});
+
+
+client.on('message', message => {
+  if (!message.guild) return;
+  if (message.content === prefix + 'join') {
+    if (message.member.voiceChannel) {
+      message.member.voiceChannel.join()
+        .then(connection => { 
+          message.reply('\`Joined\`');
+        })
+        .catch(console.log);
+    } else {
+      message.reply('\` You must be listening in a voice channel to use that!\`');
+    }
+  }
+});
+
+
+
+
+
+client.on('message', message => {
+  var helplist = `**:notes:  cmnds list  ** 
+
+\`Play\` :  [p] 
+\`Pause\` :  
+\`Resume\` :  
+\`stop\` :   
+\`forceskip\` :  
+\`skipto\` :  
+\`Skip\` :  
+\`Volume\` :  [vol] 
+\`Nowplaying\` :  [np] 
+\`repeat\` : 
+\`Leave\` :  
+
+
+`
+  if(message.content === prefix + 'help') {
+            message.delete(1000)
+    let e = '\` \`'
+	  message.reply(e).then(m => m.delete(10000))
+	  message.author.send(helplist).catch(error => message.reply('**  I couldn't send message to you ,  :negative_squared_cross_mark:**'))
+}
+});
+
+
+client.on('message', message => {
+      if (!developers.includes(message.author.id)) return;
+  var helplist = `
+ 
+**:gear:   **
+
+\`setStreaming\` :  
+\`setWatching\` :  
+\`setListening\` :  
+\`setName\` :   
+\`setAvatar\` :  
+\`setStatus\` :  
+`
+  if(message.content === prefix + 'help') {
+    message.author.send(helplist);
+  }
+  });
+
+client.login(process.env.BOT_TOKEN);
